@@ -1,8 +1,8 @@
 function Home() {
     return (
         <div>
-            <h1>Bem-vindo ao Clone TabNews</h1>
-            <p>Este é um projeto de exemplo para aprender Next.js.</p>
+            <h1>MOZÃÃÃOOOOOOOOOO </h1>
+            <p>Te amo muito, se me ama também dá uma rizadinha 😂</p>
         </div>
     );
 }
