@@ -51,6 +51,43 @@ Pronto! O servidor estará rodando e você verá a mensagem de boas-vindas na p�
 
 ---
 
-## Deploy com Vercel
+### Deploy com Vercel
 
 Para publicar seu projeto,
+
+
+## Aula 09: Níveis de Organização de Tarefas
+
+### Níveis de Organização
+
+#### Nível 1: Ser lembrado individualmente
+- Se lembrar do que precisa fazer
+- Já sabe como e o que precisa ser feito, mas precisa ser lembrado para não fazer outra coisa
+- Utiliza ferramentas com menor custo de produção (energia) e menor tempo de aquecimento
+- **Exemplo:** Anotar tarefas em um papel e deixá-lo visível na mesa de trabalho
+
+#### Nível 2: Ser lembrado em grupo
+- Relembrar toda a equipe do que precisa ser feito
+- Não precisa detalhar muito o que precisa ser feito
+- **Exemplo:** Quadros de Kanban
+
+#### Nível 3: Expandir conhecimento
+- Desenvolver de forma detalhada o que e como algo deve ser feito
+- Documentar processos e compartilhar conhecimento
+- **Exemplos:** Trello e GitHub
+
+#### Nível 4: Gerar métricas
+- Mensurar a produtividade das pessoas que estão trabalhando nas tarefas
+- **Exemplo:** Planilhas com informações de tarefas totais, executadas e concluídas
+![alt text](image-1.png)
+
+### Gerenciamento de Projetos
+
+Ao iniciar um novo projeto, não existem apenas as opções "Tudo" ou "Nada". Há uma abordagem intermediária que envolve dividir o trabalho em partes gerenciáveis.
+
+Um projeto é como uma pedra grande que precisa ser quebrada em partes menores para ser "digerida":
+
+- **Milestones:** São os grandes pedaços da pedra (objetivos maiores)
+- **Issues:** São os fragmentos que você consegue consumir (tarefas específicas)
+
+As issues no GitHub são usadas para apontar problemas ou tarefas específicas dentro do repositório.
