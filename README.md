@@ -151,3 +151,33 @@ npm install prettier -D
      ![Auto Save](./class-images/class-10/prettier-2.png)
 
 OBS: O Preetier é para salvar as configurações depoisd e escrever o código, o editorConfig é durante
+
+## Aula 12: Registro de Domínio Próprio
+
+### O que é um registrador de domínio?
+
+- Um registrador de domínio é responsável por registrar e gerenciar domínios na internet.
+- No Brasil, o principal registrador é o [registro.br](https://registro.br/).
+- Todos os domínios ficam registrados no "Registry", que no Brasil é o nic.br.
+
+  ![Registro de domínio](./class-images/class-12/aula-12-1.png)
+
+### Como configurar o DNS na Vercel
+
+1. Acesse o painel da Vercel e entre na seção **Domain**.
+2. Clique em **ADD** para adicionar um novo domínio.
+
+   ![Adicionar domínio](./class-images/class-12/aula-12-2.png)
+
+3. Escolha o projeto e insira o domínio desejado.
+
+   ![Escolher projeto e domínio](./class-images/class-12/aula-12-3.png)
+
+4. Copie os servidores DNS fornecidos pela Vercel.
+
+   ![Copiar DNS da Vercel](./class-images/class-12/aula-12-4.png)
+
+5. Acesse o site [registro.br](https://registro.br/) e cole os DNSs copiados na configuração do seu domínio.
+6. Aguarde a atualização do sistema do registro.br para que o domínio fique ativo.
+
+   ![Configurar DNS no registro.br](./class-images/class-12/aula-12-5.png)
