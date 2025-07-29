@@ -137,6 +137,7 @@ npm install prettier -D
 
 3. Configure o VS Code:
    - Instale a extensão do Prettier
+   - Abra as configurações de Open User Settings (Ctrl + Alt + P)
    - Defina o Prettier como formatador padrão nas configurações:
 
      ![Configuração do Prettier](./class-images/class-10/prettier.png)
@@ -148,3 +149,5 @@ npm install prettier -D
    - Desabilite o "Auto Save" para ter mais controle sobre quando salvar os arquivos:
 
      ![Auto Save](./class-images/class-10/prettier-2.png)
+
+OBS: O Preetier é para salvar as configurações depoisd e escrever o código, o editorConfig é durante
