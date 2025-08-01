@@ -181,3 +181,28 @@ OBS: O Preetier é para salvar as configurações depoisd e escrever o código, 
 6. Aguarde a atualização do sistema do registro.br para que o domínio fique ativo.
 
    ![Configurar DNS no registro.br](./class-images/class-12/aula-12-5.png)
+
+
+
+## Aula 14: PoC e MVP
+
+### O que são PoC e MVP?
+
+- **PoC (Prova de Conceito):** Demonstra a viabilidade técnica de uma ideia ou solução. É um experimento para validar se algo é possível antes de investir mais tempo e recursos.
+- **MVP (Produto Mínimo Viável):** É a versão mais simples de um produto que já entrega valor ao usuário. O objetivo é lançar rapidamente para obter feedback real e evoluir o produto de forma iterativa.
+
+#### Perguntas para guiar o desenvolvimento
+
+- **Para PoC:**
+  - Qual o menor custo que posso ter para mostrar a direção que devo seguir?
+  - Qual a prova que confirma (ou não) o conceito que quero validar?
+
+- **Para MVP:**
+  - O que é o mínimo que posso fazer, mas muito bem feito, para já resolver o problema do usuário?
+  - Qual o menor custo para entregar algo funcional ao usuário?
+
+---
+
+### Milestone 1: Fundação
+
+É interessante começar com uma PoC do front-end, mesmo que simples. O importante é ter uma base inicial para construir e evoluir o projeto.
