@@ -206,3 +206,8 @@ OBS: O Preetier é para salvar as configurações depoisd e escrever o código, 
 ### Milestone 1: Fundação
 
 É interessante começar com uma PoC do front-end, mesmo que simples. O importante é ter uma base inicial para construir e evoluir o projeto.
+
+### "Overengineering"
+Evite complicar demais o projeto desde o início. Foque no essencial e vá adicionando complexidade conforme necessário. O objetivo é entregar algo funcional rapidamente, sem se perder em detalhes desnecessários.
+
+Fazer o simples bem feito é mais importante do que fazer algo complexo e cheio de recursos que não são necessários no momento.
