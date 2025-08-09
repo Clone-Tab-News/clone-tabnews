@@ -182,8 +182,6 @@ OBS: O Preetier é para salvar as configurações depoisd e escrever o código, 
 
    ![Configurar DNS no registro.br](./class-images/class-12/aula-12-5.png)
 
-
-
 ## Aula 14: PoC e MVP
 
 ### O que são PoC e MVP?
@@ -208,6 +206,37 @@ OBS: O Preetier é para salvar as configurações depoisd e escrever o código, 
 É interessante começar com uma PoC do front-end, mesmo que simples. O importante é ter uma base inicial para construir e evoluir o projeto.
 
 ### "Overengineering"
+
 Evite complicar demais o projeto desde o início. Foque no essencial e vá adicionando complexidade conforme necessário. O objetivo é entregar algo funcional rapidamente, sem se perder em detalhes desnecessários.
 
 Fazer o simples bem feito é mais importante do que fazer algo complexo e cheio de recursos que não são necessários no momento.
+
+## Aula 13: Testes automatizados
+
+O nosso Teste Runner (framework de testes) é o Jest, instalamos ele como dependência de desenvolvimento:
+
+```bash
+npm install jest -D
+```
+
+Agora adicionar os scripts de teste no `package.json`:
+
+```json
+"scripts": {
+  "test": "jest",
+  "test:watch": "jest --watch"
+}
+```
+
+É assim que se espera que os testes sejam executados, com "expect" e "toBe" para verificar os resultados.
+![alt text](./class-images/class-15/aula-15-1.png)
+
+```javascript
+test("soma de dois números", () => {
+  expect(valorDinamico).toBe("12");
+});
+```
+
+Aqui nesse exemplo, o "expect" espera um valor dinâmico, enquanto o "toBe" espera um valor estático. O Jest vai comparar o resultado da soma com o valor esperado.
+
+Pode-se ler assim: Espera-se que algo vindo do sistema (expect, valor dinâmico) possua o resultado declarado (toBe, hardcoded).
