@@ -240,3 +240,73 @@ test("soma de dois números", () => {
 Aqui nesse exemplo, o "expect" espera um valor dinâmico, enquanto o "toBe" espera um valor estático. O Jest vai comparar o resultado da soma com o valor esperado.
 
 Pode-se ler assim: Espera-se que algo vindo do sistema (expect, valor dinâmico) possua o resultado declarado (toBe, hardcoded).
+
+## Aula 16: Testes
+
+### Tipos de Testes
+
+- **Teste Unitário:** Testa uma unidade específica do código, como uma função ou método isolado. Não depende de outras partes do sistema ou de infraestrutura externa (ex: banco de dados). São independentes e autossuficientes.
+- **Teste de Integração:** Testa a interação entre diferentes partes do sistema, como módulos ou componentes. Garante que as unidades funcionam bem juntas e podem envolver dependências externas, como banco de dados ou APIs.
+- **Teste E2E (End-to-End):** Testa o sistema como um todo, simulando o comportamento do usuário final e verificando se todas as partes funcionam juntas corretamente.
+
+![Tipos de Testes](/class-images/class-16/imagem-16-1.png)
+
+### Por que precisamos de testes?
+
+Garantir que as "peças do quebra-cabeça" do software se encaixem é fundamental. Não adianta cada parte funcionar sozinha se, juntas, não entregam o resultado esperado. Mudanças em uma parte do sistema podem causar erros em cadeia. Testes de unidade e integração ajudam a evitar esses problemas ao garantir que alterações não quebrem o funcionamento do sistema.
+
+### Diferença entre tipos de testes
+
+- **Teste de unidade:** Código que funciona por conta própria, sem dependências externas.
+- **Teste de integração:** Foca na integração entre unidades ou camadas da aplicação/infrastrutura. Mesmo com 100% de cobertura em testes de unidade, o sistema pode não funcionar se as integrações falharem. Exemplo: testar uma chamada HTTP que acessa um banco de dados.
+- **Teste E2E:** O mais fiel ao ambiente real, simulando a experiência do usuário final. Pode envolver deploy em infraestrutura semelhante à produção.
+
+### Velocidade e custos
+
+Quanto mais abrangente o teste, mais lento ele tende a ser. Testes E2E, por exemplo, podem exigir infraestrutura adicional e simulação de navegadores, tornando-os mais demorados. Em projetos grandes, a execução de todos os testes pode impactar o tempo de entrega de correções rápidas (hotfixes).
+
+### Modelos de Testes
+
+- **Pirâmide de Testes:** Proposta por Mike Cohn (2009), sugere ter mais testes unitários, alguns de integração e poucos E2E.
+- **Troféu de Testes:** Proposta por Guillermo Rauch (criador do Next.js), valoriza mais os testes de integração.
+- **Modelo Favo de Mel do Spotify:** Também dá mais importância aos testes de integração.
+
+### Como distinguir testes de unidade e integração
+
+Antigamente, testes de unidade eram feitos por desenvolvedores e testes de integração pelo time de qualidade. Hoje, muitos defendem que o importante é ter testes rápidos e confiáveis, independentemente da divisão clássica. Se não for possível implementar todos os tipos, priorize os testes de integração, pois eles garantem que as partes do sistema funcionam juntas.
+
+> **Dica:** Projetos como Pagar.me e TabNews priorizaram testes de integração para garantir que a API funcionasse corretamente, já que o mais importante era a integração das partes.
+
+---
+
+### Encostando a mão no Protocolo HTTP
+
+**Endpoint** é o endereço de uma API. Tudo com o que você interage provavelmente é uma interface, que abstrai detalhes de implementação.
+
+Para criar um endpoint no Next.js, crie um arquivo em `pages/api`. Exemplo de rota: `http://localhost:3000/api/status`.
+
+![Exemplo de endpoint](/class-images/class-16/image-16-2.png)
+
+```javascript
+function status(request, response) {
+  response.status(200).json({ status: "ok" });
+}
+
+export default status;
+```
+
+**CURL** é uma ferramenta de linha de comando para fazer requisições HTTP.
+
+```bash
+curl -v http://localhost:3000/api/status
+```
+
+![Exemplo CURL](/class-images/class-16/image-16-3.png)
+
+Para visualizar detalhes do protocolo HTTP, utilize o parâmetro `-v`:
+
+```bash
+curl -v http://localhost:3000/api/status
+```
+
+![Detalhes HTTP](/class-images/class-16/image-16-4.png)
