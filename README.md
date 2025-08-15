@@ -310,3 +310,80 @@ curl -v http://localhost:3000/api/status
 ```
 
 ![Detalhes HTTP](/class-images/class-16/image-16-4.png)
+
+## Aula 17: Qual banco de dados escolher?
+
+Existem três decisões principais na hora de escolher a arquitetura de dados para um projeto:
+
+- SGBD (Sistema de Gerenciamento de Banco de Dados): software que armazena e gerencia os dados. Exemplos: PostgreSQL, MySQL, MongoDB.
+- Biblioteca de acesso / ORM: abstração para fazer queries e mapear modelos no código. Exemplos: Prisma, Sequelize, TypeORM.
+- Migrations: scripts que versionam o esquema do banco (criação/alteração de tabelas). Exemplos: Prisma Migrate, TypeORM Migrations.
+
+![Etapas de escolha](/class-images/class-17/image.png)
+
+As escolhas do Filipe para este curso estão ilustradas abaixo:
+![Escolhas do Filipe](/class-images/class-17/image-1.png)
+
+### Por que o Docker virou padrão?
+
+Antes cada desenvolvedor rodava tudo na própria máquina, o que gerava a famosa frase "na minha máquina funciona". Máquinas virtuais resolveram parte do problema, mas são pesadas.
+
+O Docker trouxe containers leves que compartilham o kernel do sistema operacional, permitindo ambientes isolados, reprodutíveis e mais rápidos. Isso facilita desenvolver, testar e distribuir imagens (ex.: enviar para o Docker Hub).
+
+![Docker](/class-images/class-17/image-2.png)
+
+### Subir um banco de dados local (exemplo: PostgreSQL)
+
+Crie um arquivo de composição na raiz do projeto (ex.: docker-compose.yml) e adicione um serviço de banco:
+
+```yaml
+# docker-compose.yml
+version: "3.9"
+
+services:
+  database:
+    image: postgres:17.6-alpine3.21
+    environment:
+      POSTGRES_PASSWORD: local_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+```
+
+Suba o container em segundo plano:
+
+```bash
+docker compose up -d
+```
+
+### Conectando ao PostgreSQL local
+
+Instale o cliente psql (Ubuntu/Debian):
+
+```bash
+sudo apt update
+sudo apt install -y postgresql-client
+```
+
+Conecte-se ao banco:
+
+```bash
+psql --host=localhost --port=5432 --username=postgres --dbname=postgres
+# será solicitada a senha definida em POSTGRES_PASSWORD (ex: local_password)
+```
+
+Para sair do psql, digite:
+
+```bash
+\q
+```
+
+Se o arquivo docker-compose.yml estiver em outro diretório, use:
+
+```bash
+docker compose -f caminho/para/docker-compose.yml up -d
+```
