@@ -347,11 +347,6 @@ services:
       POSTGRES_PASSWORD: local_password
     ports:
       - "5432:5432"
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
-volumes:
-  db-data:
 ```
 
 Suba o container em segundo plano:
@@ -386,4 +381,107 @@ Se o arquivo docker-compose.yml estiver em outro diretório, use:
 
 ```bash
 docker compose -f caminho/para/docker-compose.yml up -d
+```
+
+## Aula 18: Criar módulo "database.js"
+
+No terminal usamos o psql para conectar ao PostgreSQL manualmente. No código, usamos o pacote "pg" para conectar ao banco a partir da aplicação.
+![alt text](/class-images/class-18/image.png)
+
+Instalação do pacote "pg":
+
+```bash
+npm install pg@8.11.3
+```
+
+Então dentro do diretório infra, foi criado o modulo database.js, que é responsável por de baixo dos panos, abrir conexão
+com o banco de dados, executar uma query e fechar a conexão., sem que seja preciso fazer isso em cada arquivo, somente importando ele
+
+```javascript
+import { Client } from "pg";
+
+async function query(queryObject) {
+  const client = new Client({
+    host: "localhost",
+    port: 5432,
+    user: "postgres",
+    database: "postgres",
+    password: "local_password",
+  });
+
+  await client.connect();
+  const result = await client.query(queryObject);
+  await client.end();
+
+  return result;
+}
+
+export default { query };
+```
+
+Então importamos esse modulo database para dentro do nosso endpoint /api/v1/status, e fazemos uma query de teste, que é o SELECT 1 + 1 AS sum.
+
+```javascript
+import database from "../../../../infra/database.js";
+
+async function status(request, response) {
+  const result = await database.query("SELECT 1 + 1 AS sum;");
+  console.log(result);
+  response.status(200).json({ status: "ok" });
+}
+
+export default status;
+```
+
+### A importância das Variáveis de Ambiente
+
+Podemos definir um serviço em três Camadas:
+
+- Interface
+- Aplicação
+- Persistência
+
+Enquanto a camada de Interface se preocupa com oferecer o melhor layout e experiência para o usuário, a camada de Aplicação se preocupa com a lógica de negócio e regras do sistema. Já a camada de Persistência é responsável por armazenar os dados de forma segura e eficiente.
+
+A lógica para um serviço ser Stateless (sem estado) é que ele não deve depender de informações armazenadas localmente, como em memória ou arquivos. Isso permite que o serviço seja escalável e resiliente, já que qualquer instância do serviço pode atender a qualquer requisição sem depender de dados específicos.
+![alt text](/class-images/class-18/image-1.png)
+
+### Variáveis de Ambiente no Código
+
+Criei o arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_DB=postgres
+POSTGRES_PASSWORD=local_password
+```
+
+E alterei no database.js para pegar essas variáveis de ambiente:
+
+```javascript
+const client = new Client({
+  host: process.env.POSTGRES_HOST,
+  port: process.env.POSTGRES_PORT,
+  user: process.env.POSTGRES_USER,
+  database: process.env.POSTGRES_DB,
+  password: process.env.POSTGRES_PASSWORD,
+});
+```
+
+### Variáveis de Ambiente no Docker Compose
+
+Foi alterado o docker-compose.yml para pegar as variáveis de ambiente do arquivo .env
+foi alterado o environment para env_file
+
+```yaml
+version: "3.9"
+services:
+  database:
+    image: postgres:17.6-alpine3.21
+    env_file:
+      - ../.env
+    ports:
+      - "5432:5432"
 ```
