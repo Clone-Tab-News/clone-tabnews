@@ -485,3 +485,48 @@ services:
     ports:
       - "5432:5432"
 ```
+
+### Foi certo fazer o commit do .env?
+
+Segundo a documentação do NextJS sim, .env deveria ser commitado por conter as variáveis de ambiente, porém como pode haver
+dados sensíveis, o ideal é ter um .env.example que não contenha dados sensíveis, e sim apenas o nome das variáveis, para que
+quem for clonar o projeto, saiba quais variáveis de ambiente precisa criar.
+
+Porém nesse exemplo utilizamos o .env.development, que é específico para o ambiente de desenvolvimento, e não contém dados sensíveis.
+
+```bash
+mv .env .env.development
+```
+
+E no composer.yaml alterei para pegar o .env.development
+
+```yaml
+# Qualquer serviço que você deseja executar deve ser definido aqui.
+services:
+  database:
+    image: "postgres:17.6-alpine3.21"
+    env_file:
+      - ../.env.development
+    ports:
+      - "5432:5432"
+```
+
+### Caminho Absoluto
+
+Para que o NextJs reconheça o caminho absoluto, foi criado o arquivo jsconfig.json na raiz do projeto com o seguinte conteúdo:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": "."
+  }
+}
+```
+
+Esse "." é para referenciar que o caminho absoluto é a raiz do projeto.
+
+Com isso, podemos importar o database.js de forma absoluta, sem precisar usar o caminho relativo com muitos "../"
+
+```javascript
+import database from "infra/database.js";
+```
