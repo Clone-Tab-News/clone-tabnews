@@ -530,3 +530,28 @@ Com isso, podemos importar o database.js de forma absoluta, sem precisar usar o 
 ```javascript
 import database from "infra/database.js";
 ```
+
+### Configurar scripts dos serviços
+
+Primeiro criamos scripts para subir, parar e derrubar o container do docker, fizemos isso dedntro do package.json
+
+```json
+{
+  "scripts": {
+    "services:up": "docker compose -f infra/compose.yaml up -d",
+    "services:stop": "docker compose -f infra/compose.yaml stop",
+    "services:down": "docker compose -f infra/compose.yaml down"
+  }
+}
+```
+
+Também podemos combinar um comando após o outro, como por exemplo subir o conatiner e já rodar o service com o nosso comando
+npm run dev:
+
+```json
+{
+  "scripts": {
+    "dev": "npm run services:up && next dev"
+  }
+}
+```
