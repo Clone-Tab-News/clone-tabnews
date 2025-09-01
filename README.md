@@ -591,3 +591,67 @@ async function status(request, response) {
 
 export default status;
 ```
+
+### Database "Version" (+ Red, Green e Refactor do TDD)
+
+RED é o estagio do TDD onde os testes falham, pois a funcionalidade ainda não foi implementada.
+
+GREEN é o estágio onde os testes passam, ou seja, a funcionalidade foi implementada corretamente.
+
+REFACTORY é o estágio de quando os testes já passaram, então podemos refatorar o código deixando ele mais semântico.
+
+Para vermos a versão que esta no Postgres podemos usar a query SHOW, que nos "mostra alguns detalhes da nossa aplicação.
+
+```javascript
+async function status(request, response) {
+  const updatedAt = new Date().toISOString();
+  const databaseVersion = await database
+    .query("SHOW server_version;")
+    .then((result) => result.rows[0].server_version);
+
+  response.status(200).json({
+    updated_at: updatedAt,
+    dependences: {
+      database: {
+        version: databaseVersion,
+      },
+    },
+  });
+}
+```
+
+Foi preciso fazer o then(), pois o retorno do dabase.query é um array da propriedade row.
+
+```text
+Result {
+  command: 'SHOW',
+  rowCount: null,
+  oid: null,
+  rows: [ { server_version: '17.6' } ],
+  fields: [
+    Field {
+      name: 'server_version',
+      tableID: 0,
+      columnID: 0,
+      dataTypeID: 25,
+      dataTypeSize: -1,
+      dataTypeModifier: -1,
+      format: 'text'
+    }
+  ],
+  _parsers: [ [Function: noParse] ],
+  _types: TypeOverrides {
+    _types: {
+      getTypeParser: [Function: getTypeParser],
+      setTypeParser: [Function: setTypeParser],
+      arrayParser: [Object],
+      builtins: [Object]
+    },
+    text: {},
+    binary: {}
+  },
+  RowCtor: null,
+  rowAsArray: false,
+  _prebuiltEmptyResultObject: { server_version: null }
+}
+```
