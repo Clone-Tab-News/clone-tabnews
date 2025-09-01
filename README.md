@@ -555,3 +555,39 @@ npm run dev:
   }
 }
 ```
+
+## Aula 19:
+
+### Endpoint "/status": ISO 8601 + Fuso + MVC + lowerCamelCase
+
+O padrão ISO 8601 é uma norma internacional que define a representação de datas e horas. Ele é amplamente utilizado em APIs para garantir que as informações de data e hora sejam transmitidas de forma consistente e sem ambiguidade.
+
+Um exemplo de data no formato ISO 8601 é: `2023-03-15T13:45:30Z`, que representa 15 de março de 2023, às 13:45:30 UTC.
+
+Além disso, ao trabalhar com fusos horários, é importante considerar a diferença entre UTC e o horário local. O padrão ISO 8601 permite a inclusão de informações de fuso horário, como `2023-03-15T13:45:30-03:00`, que indica que a hora está no fuso horário de Brasília (UTC-3).
+
+Controller pede pro model alguma informação ou regra de negócio
+
+Depois que a Model faz o que tem que ser feito ele retorna essa informação para o Controller.
+
+Então o Controller manda essa informação para a View, que se responsabiliza em devolver isso para o consumidor final no formato correto.
+
+Para fazer a data atual ser retornada no formato ISO 8601, podemos utilizar o método `toISOString()` do objeto `Date` em JavaScript. Esse método retorna uma string no formato ISO 8601, que é o formato desejado para a nossa API.
+
+```javascript
+const updatedAt = new Date().toISOString();
+```
+
+OBS: a resposta (View) deve sempre ser feita em `snack case`
+
+```javascript
+async function status(request, response) {
+  const updatedAt = new Date().toISOString();
+  response.status(200).json({
+    status: "ok",
+    updated_at: updatedAt,
+  });
+}
+
+export default status;
+```
