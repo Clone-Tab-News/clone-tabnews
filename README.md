@@ -592,6 +592,8 @@ async function status(request, response) {
 export default status;
 ```
 
+## Aula 20
+
 ### Database "Version" (+ Red, Green e Refactor do TDD)
 
 RED é o estagio do TDD onde os testes falham, pois a funcionalidade ainda não foi implementada.
@@ -654,4 +656,51 @@ Result {
   rowAsArray: false,
   _prebuiltEmptyResultObject: { server_version: null }
 }
+```
+
+### Database "Max Connections"
+
+Podemos pegar a quantidade máxima de conexões que o banco de dados suporta, com a query SHOW max_connections;
+
+```javascript
+async function status(request, response) {
+  const updatedAt = new Date().toISOString();
+  const databaseVersion = await database
+    .query("SHOW server_version;")
+    .then((result) => result.rows[0].server_version);
+
+  const maxConnections = await database
+    .query("SHOW max_connections;")
+    .then((result) => result.rows[0].max_connections);
+
+  response.status(200).json({
+    updated_at: updatedAt,
+    dependences: {
+      database: {
+        version: databaseVersion,
+        max_connections: parseInt(maxConnections),
+      },
+    },
+  });
+}
+
+export default status;
+```
+
+E fazemos em seguida o teste de integração para esse endpoint /api/v1/status
+
+```javascript
+test("Get to /api/v1/status should return 200", async () => {
+  const response = await fetch("http://localhost:3000/api/v1/status");
+  expect(response.status).toBe(200);
+
+  const responseBody = await response.json();
+  expect(responseBody.updated_at).toBeDefined();
+
+  const parsedUpdatedAt = new Date(responseBody.updated_at).toISOString();
+  expect(responseBody.updated_at).toBe(parsedUpdatedAt);
+
+  expect(responseBody.dependences.database.version).toEqual("17.6");
+  expect(responseBody.dependences.database.max_connections).toEqual(100);
+});
 ```

@@ -6,11 +6,16 @@ async function status(request, response) {
     .query("SHOW server_version;")
     .then((result) => result.rows[0].server_version);
 
+  const maxConnections = await database
+    .query("SHOW max_connections;")
+    .then((result) => result.rows[0].max_connections);
+
   response.status(200).json({
     updated_at: updatedAt,
     dependences: {
       database: {
         version: databaseVersion,
+        max_connections: parseInt(maxConnections),
       },
     },
   });
