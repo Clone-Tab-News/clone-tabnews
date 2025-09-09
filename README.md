@@ -714,3 +714,67 @@ const databaseOpenedConnectionsResult = await database.query(
   "SELECT count(*)::int from pg_stat_activity WHERE datname = 'local_db';",
 );
 ```
+
+### SQL Injection e Queries Parametrizadas
+
+Primeiro começamos invadindo nosso próprio banco parametrizando nossa query:
+
+```javascript
+const databaseName = request.query.databaseName;
+const databaseOpenedConnectionsResult = await database.query(
+  `SELECT count(*)::int from pg_stat_activity WHERE datname = '${databaseName}';`,
+);
+```
+
+Então, nos testes de integração, criamos um teste que simula um ataque de SQL Injection:
+
+```javascript
+test.only("Teste SQL Injection", async () => {
+  await fetch(
+    "http://localhost:3000/api/v1/status?databaseName='; SELECT pg_sleep(4); --",
+  );
+});
+```
+
+Dessa forma o nosso banco de dados fica vulnerável a ataques de SQL Injection, onde um atacante pode manipular a query para executar comandos maliciosos.
+
+Para evitar isso, devemos utilizar queries parametrizadas, onde os valores são passados separadamente da query, evitando que o atacante consiga manipular a query.
+
+```javascript
+const databaseName = process.env.POSTGRES_DB;
+const databaseOpenedConnectionsResult = await database.query({
+  text: "SELECT count(*)::int from pg_stat_activity WHERE datname = $1;",
+  values: [databaseName],
+});
+```
+
+Um outro ponto muito importante é a questão do fechamento da connexão com o banco ded dados, sempre que ocorre algum erro fica uma conexão aberta, e isso pode levar o banco a ficar sem conexões disponíveis.
+
+Para sempre evitar isso e garantir que haverá o fechamento da conexão, independente se ocorrer um erro ou não, podemos utilizar o try...catch...finally
+
+```javascript
+import { Client } from "pg";
+
+async function query(queryObject) {
+  const client = new Client({
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query(queryObject);
+
+    return result;
+  } catch (error) {
+    console.error("Database query error:", error);
+  } finally {
+    await client.end();
+  }
+}
+
+export default { query };
+```
