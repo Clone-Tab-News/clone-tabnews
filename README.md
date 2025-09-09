@@ -704,3 +704,13 @@ test("Get to /api/v1/status should return 200", async () => {
   expect(responseBody.dependences.database.max_connections).toEqual(100);
 });
 ```
+
+### Database "Opened Connections"
+
+Criamos a query para pegar a quantidade de conexões abertas no banco de dados, com a query SELECT \* from pg_stat_activity WHERE datname = 'local_db';
+
+```javascript
+const databaseOpenedConnectionsResult = await database.query(
+  "SELECT count(*)::int from pg_stat_activity WHERE datname = 'local_db';",
+);
+```
