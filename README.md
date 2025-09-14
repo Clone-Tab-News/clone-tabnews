@@ -778,3 +778,47 @@ async function query(queryObject) {
 
 export default { query };
 ```
+
+## Aula 21
+
+### Investigando logs da Vercel em Produção
+
+Para investigar melhor o que de fato esta acontecendo em produção, podemos adicionar mais logs no nosso código, para termos mais informações do que esta acontecendo.
+
+No arquivo infra/database.js, adicionei um console.log para imprimir as credenciais do banco de dados que estão sendo usadas na conexão.
+
+```javascript
+import { Client } from "pg";
+
+async function query(queryObject) {
+  const client = new Client({
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+  });
+
+  console.log("Credenciais do Postgres: ", {
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+  });
+
+  try {
+    await client.connect();
+    const result = await client.query(queryObject);
+
+    return result;
+  } catch (error) {
+    console.error("Database query error:", error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+export default { query };
+```
