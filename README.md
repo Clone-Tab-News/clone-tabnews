@@ -822,3 +822,26 @@ async function query(queryObject) {
 
 export default { query };
 ```
+
+Com isso após acessar a rota `/api/v1/status` em produção, podemos ver nos logs da Vercel as credenciais que estão sendo usadas para conectar no banco de dados.
+![alt text](/class-images/class-21/image.png)
+
+### Banco de Produção
+
+Criamos uma conta na NeonDB, que é um serviço de banco de dados PostgreSQL na nuvem, e criamos um banco de dados chamado `tabnews_clone`.
+
+Dentro dela criamos uma instância do banco PostgreSQL, e pegamos as credenciais para conectar no banco.
+
+Então entramos no .env do projeto e adicionamos as credenciais do banco de produção.
+
+```
+POSTGRES_HOST=ep-lingering-snow-779165.us-east-2.aws.neon.tech
+POSTGRES_PORT=5432
+POSTGRES_USER=your_username
+POSTGRES_DB=tabnews_clone
+POSTGRES_PASSWORD=your_password
+```
+
+Com isso conseguimos acessar a rota `/api/v1/status` em localmente, e ver que agora estamos conectando no banco de produção.
+
+Depois entramos na vercel e colocamos as mesmas variáveis de ambiente do .env, para que em produção o projeto consiga conectar no banco de produção.
