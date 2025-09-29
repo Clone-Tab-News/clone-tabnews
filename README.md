@@ -845,3 +845,47 @@ POSTGRES_PASSWORD=your_password
 Com isso conseguimos acessar a rota `/api/v1/status` em localmente, e ver que agora estamos conectando no banco de produção.
 
 Depois entramos na vercel e colocamos as mesmas variáveis de ambiente do .env, para que em produção o projeto consiga conectar no banco de produção.
+
+## Aula 22
+
+Iremos utilizar o node-pg-migration que é uma ferramenta para controle de migração de banco de dados para PostgreSQL.
+
+### Instalação do node-pg-migration
+
+```bash
+npm install node-pg-migrate@6.2.2
+```
+
+Adicionamos o script no package.json para criar uma nova migration:
+
+```json
+"scripts": {
+    "migrate:create": "node-pg-migrate --migrations-dir infra/migrations create"
+  }
+```
+
+Para testes foi rodado uma migration teste:
+
+```bash
+npm run migration:create first migrate teste
+```
+
+Vamos adicionar o modulo "dotenv" para carregar as variáveis de ambiente do .env
+
+```bash
+npm install dotenv@16.4.4
+```
+
+E alteramos o script, informando qual o arquivo do .env.development
+
+```json
+"scripts": {
+    "migrate:up": "node-pg-migrate --migrations-dir infra/migrations --envPath .env.development up"
+}
+```
+
+Adicionamos a nova variável de ambiente DATABASE_URL no .env.development
+
+```bash
+DATABASE_URL=postgres://local_user:local_password@localhost:5432/local_db
+```
