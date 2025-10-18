@@ -889,3 +889,51 @@ Adicionamos a nova variável de ambiente DATABASE_URL no .env.development
 ```bash
 DATABASE_URL=postgres://local_user:local_password@localhost:5432/local_db
 ```
+
+## Aula 23
+
+### Migrations pelo endpoint “/migrations” (Dry Run)
+
+Documentação que iremos utilizar da parte programática do node-pg-migrate, que permite fazer a mesma coisa que o CLI, mas de forma programática (código).
+https://salsita.github.io/node-pg-migrate/api
+
+Modo Dry Run é uma funcionalidade que permite simular a execução de uma operação sem realmente aplicá-la. No contexto de migrações de banco de dados, o Dry Run permite verificar quais mudanças seriam feitas no banco sem realmente executá-las. Isso é útil para revisar as alterações antes de aplicá-las, garantindo que tudo esteja correto e evitando possíveis erros.
+
+Modo Live Run é o modo normal de execução, onde as mudanças são realmente aplicadas ao banco de dados. Nesse modo, as migrações são executadas e as alterações são feitas no banco conforme definido nos arquivos de migração.
+
+Então criamos o endpoint /api/v1/migrations, que ao ser acessado, executa as migrações em modo Dry Run, ou seja, simula a execução das migrações sem realmente aplicá-las ao banco de dados.
+
+```bash
+tests/integration/api/v1/migrations/get.test.js
+```
+
+```javascript
+test("Get to /api/v1/migrations should return 200", async () => {
+  const response = await fetch("http://localhost:3000/api/v1/migrations");
+});
+```
+
+Alteramos o teste spara verificar se o que esta vindo do responsiBody é um array:
+```javascript
+  expect(response.status).toBe(200);
+
+  const responseBody = await response.json();
+  expect(Array.isArray(responseBody)).toBe(true);
+```
+
+E utilizamos o migrationrunner do node-pg-migrate para executar as migrações em modo Dry Run:
+
+```javascript
+export default async function migrations(request, response) {
+  const migrations = await migrateRunner({
+    databaseUrl: process.env.DATABASE_URL,
+    dryRun: true,
+    dir: join("infra", "migrations"),
+    direction: "up",
+    verbose: true,
+    migrationsTable: "pgmigrations",
+  });
+
+  response.status(200).json(migrations);
+}
+```
