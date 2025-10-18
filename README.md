@@ -937,3 +937,54 @@ export default async function migrations(request, response) {
   response.status(200).json(migrations);
 }
 ```
+
+### Migrations pelo endpoint “/migrations” (Live Run)
+Para executar as migrações em modo Live Run, ou seja, aplicando as mudanças ao banco de dados, criamos um teste para rodar com o metodo POST:
+
+```javascript
+test("Post to /api/v1/migrations should return 200", async () => {
+  const response = await fetch("http://localhost:3000/api/v1/migrations", {
+    method: "POST",
+  });
+
+  const responseBody = await response.json();
+  expect(Array.isArray(responseBody)).toBe(true);
+});
+```
+
+e alteramos a controller para se receber um GET, rodar em modo Dry Run, e se receber um POST, rodar em modo Live Run:
+
+```javascript
+import migrateRunner from "node-pg-migrate";
+import { join } from "node:path";
+
+export default async function migrations(request, response) {
+  if (request.method === "GET") {
+    const migrations = await migrateRunner({
+      databaseUrl: process.env.DATABASE_URL,
+      dryRun: true,
+      dir: join("infra", "migrations"),
+      direction: "up",
+      verbose: true,
+      migrationsTable: "pgmigrations",
+    });
+
+    return response.status(200).json(migrations);
+  }
+
+  if (request.method === "POST") {
+    const migrations = await migrateRunner({
+      databaseUrl: process.env.DATABASE_URL,
+      dryRun: false,
+      dir: join("infra", "migrations"),
+      direction: "up",
+      verbose: true,
+      migrationsTable: "pgmigrations",
+    });
+
+    return response.status(200).json(migrations);
+  }
+
+  return response.status(405).json({ message: "Method not allowed" });
+}
+```
