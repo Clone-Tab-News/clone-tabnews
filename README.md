@@ -910,15 +910,12 @@ tests/integration/api/v1/migrations/get.test.js
 ```javascript
 test("Get to /api/v1/migrations should return 200", async () => {
   const response = await fetch("http://localhost:3000/api/v1/migrations");
-});
-```
-
-Alteramos o teste spara verificar se o que esta vindo do responsiBody é um array:
-```javascript
-  expect(response.status).toBe(200);
-
   const responseBody = await response.json();
+
+  expect(response.status).toBe(200);
   expect(Array.isArray(responseBody)).toBe(true);
+  expect(responseBody.length).toBeGreaterThanOrEqual(0);
+});
 ```
 
 E utilizamos o migrationrunner do node-pg-migrate para executar as migrações em modo Dry Run:
@@ -988,3 +985,150 @@ export default async function migrations(request, response) {
   return response.status(405).json({ message: "Method not allowed" });
 }
 ```
+
+## Aula 24
+
+### Fazendo o Jest "transpilar" arquivos em ESM
+
+#### Problema: Testes rodando em paralelo
+
+O primeiro objetivo foi fazer o Jest parar de rodar de forma paralela e passar a rodar de forma linear (sequencial). Isso é importante para testes de integração que compartilham o mesmo banco de dados, pois testes paralelos podem causar condições de corrida (race conditions) e resultados inconsistentes.
+
+Para resolver isso, adicionamos a flag `--runInBand` no script de teste do `package.json`:
+
+```json
+"test": "jest --runInBand",
+"test:watch": "jest --watchAll --runInBand",
+```
+
+A flag `--runInBand` força o Jest a executar todos os testes em série, um após o outro, no mesmo processo.
+
+#### Problema: Jest não suporta ESM nativamente
+
+Encontramos um novo problema: por padrão, o Jest não possui as configurações necessárias para trabalhar com ECMAScript Modules (ESM), que é o padrão moderno do JavaScript utilizado no projeto com `import/export`.
+
+#### Solução: Integrar Jest com Next.js
+
+Precisamos fazer com que o Jest possua os mesmos "poderes" do Next.js para transpilar arquivos ESM. Para isso, criamos o arquivo `jest.config.js` na raiz do projeto:
+
+```javascript
+const dotenv = require("dotenv");
+dotenv.config({
+  path: ".env.development",
+}); // Carrega as variáveis de ambiente do .env para o process.env
+
+const nextJest = require("next/jest"); // Dá para o Jest os "poderes" do Next.js
+
+const createJestConfig = nextJest();
+const jestConfig = createJestConfig({
+  moduleDirectories: ["node_modules", "<rootDir>"],
+  testEnvironment: "node",
+});
+
+module.exports = jestConfig;
+```
+
+**O que cada parte faz:**
+
+1. **`dotenv.config()`**: Carrega as variáveis de ambiente do arquivo `.env.development` para o `process.env`, garantindo que os testes tenham acesso às mesmas configurações do ambiente de desenvolvimento.
+
+2. **`require("next/jest")`**: Importa a função de configuração do Jest fornecida pelo Next.js, que já vem configurada para trabalhar com ESM, TypeScript e outras features modernas.
+
+3. **`moduleDirectories`**: Define onde o Jest deve procurar por módulos. O `<rootDir>` permite usar imports absolutos (como `import database from "infra/database.js"`) em vez de relativos (como `import database from "../../../../infra/database.js"`).
+
+4. **`testEnvironment: "node"`**: Define que os testes serão executados em ambiente Node.js (não em ambiente de navegador/DOM), que é apropriado para testes de API e integração com banco de dados.
+
+#### Problema: Fetch não disponível no Node.js
+
+Como o `fetch` não é nativo em versões antigas do Node.js, foi necessário adicionar o polyfill `node-fetch` nos arquivos de teste:
+
+```javascript
+import fetch from "node-fetch";
+globalThis.fetch = fetch;
+```
+
+Isso garante que o `fetch` esteja disponível globalmente em todos os testes, simulando o comportamento do navegador.
+
+#### Isolamento de testes com cleanDatabase
+
+Para garantir que cada teste comece com um banco de dados limpo (evitando interferência entre testes), criamos a função `cleanDatabase` que é executada antes de todos os testes:
+
+```javascript
+beforeAll(cleanDatabase);
+
+async function cleanDatabase() {
+  // Derrubar todas as tabelas do banco de dados
+  // E depois recriar o schema public
+  await database.query("drop schema public cascade; create schema public;");
+}
+```
+
+**Como funciona:**
+
+- `DROP SCHEMA public CASCADE`: Remove o schema público e todas as suas dependências (tabelas, índices, etc.)
+- `CREATE SCHEMA public`: Recria o schema público vazio
+- `beforeAll()`: Hook do Jest que executa a função antes de todos os testes do arquivo
+
+Isso garante um ambiente limpo e previsível para cada execução de testes.
+
+#### Estrutura final dos testes
+
+Com todas essas configurações, os testes de integração ficaram organizados da seguinte forma:
+
+**GET /api/v1/migrations** (`tests/integration/api/v1/migrations/get.test.js`):
+```javascript
+import database from "infra/database.js";
+import fetch from "node-fetch";
+
+globalThis.fetch = fetch;
+
+beforeAll(cleanDatabase);
+
+async function cleanDatabase() {
+  await database.query("drop schema public cascade; create schema public;");
+}
+
+test("Get to /api/v1/migrations should return 200", async () => {
+  const response = await fetch("http://localhost:3000/api/v1/migrations");
+  const responseBody = await response.json();
+
+  expect(response.status).toBe(200);
+  expect(Array.isArray(responseBody)).toBe(true);
+  expect(responseBody.length).toBeGreaterThanOrEqual(0);
+});
+```
+
+**POST /api/v1/migrations** (`tests/integration/api/v1/migrations/post.test.js`):
+```javascript
+import database from "infra/database.js";
+import fetch from "node-fetch";
+
+globalThis.fetch = fetch;
+
+beforeAll(cleanDatabase);
+
+async function cleanDatabase() {
+  await database.query("drop schema public cascade; create schema public;");
+}
+
+test("POST to /api/v1/migrations should return 200", async () => {
+  const response = await fetch("http://localhost:3000/api/v1/migrations", {
+    method: "POST",
+  });
+
+  const responseBody = await response.json();
+  expect(response.status).toBe(200);
+  expect(Array.isArray(responseBody)).toBe(true);
+});
+```
+
+#### Resumo das alterações
+
+1. ✅ Testes agora rodam de forma sequencial (`--runInBand`)
+2. ✅ Jest configurado para trabalhar com ESM através do Next.js
+3. ✅ Variáveis de ambiente carregadas automaticamente nos testes
+4. ✅ Fetch disponível globalmente via `node-fetch`
+5. ✅ Banco de dados limpo antes de cada arquivo de teste
+6. ✅ Imports absolutos funcionando nos testes
+
+Com essa estrutura, os testes de integração são confiáveis, isolados e podem ser executados de forma consistente em qualquer ambiente.
