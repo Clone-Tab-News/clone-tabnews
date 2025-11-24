@@ -1132,3 +1132,107 @@ test("POST to /api/v1/migrations should return 200", async () => {
 6. ✅ Imports absolutos funcionando nos testes
 
 Com essa estrutura, os testes de integração são confiáveis, isolados e podem ser executados de forma consistente em qualquer ambiente.
+
+## Aula 25: Deploys e Migração em Produção
+
+### Instalando o dotenv-expand
+O pacote `dotenv-expand` é uma extensão do `dotenv` que permite expandir variáveis de ambiente que referenciam outras variáveis. Isso é útil quando você deseja criar variáveis compostas ou reutilizar valores já definidos.
+
+no termianal, instalei o pacote:
+
+```bash
+npm install dotenv-expand@11.0.6
+```
+
+ai meu .env.development ficou assim:
+```
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=local_user
+POSTGRES_PASSWORD=local_password
+POSTGRES_DB=local_db
+DATABASE_URL=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB
+NODE_ENV=development
+```
+
+### Criando uma conexão com o banco
+No arquivo infra/database.js, criei o método assincrono getNewClient. Ele retorna uma instância conectada do banco de dados PostgreSQL usando as variáveis de ambiente para configuração.
+
+```javascript
+import { Client } from "pg";
+
+async function query(queryObject) {
+  let client;
+  try {
+    client = await getNewClient();
+    const result = await client.query(queryObject);
+
+    return result;
+  } catch (error) {
+    console.error("Database query error:", error);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+async function getNewClient() {
+  const client = new Client({
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+    ssl: process.env.NODE_ENV === "production" ? true : false,
+  });
+
+  await client.connect();
+  return client;
+}
+
+export default { query, getNewClient };
+```
+
+Agora chamamos ela no @pages/api/v1/migrations/index.js
+
+```javascript
+import migrateRunner from "node-pg-migrate";
+import { join } from "node:path";
+import database from "infra/database.js";
+
+export default async function migrations(request, response) {
+  const dbClient = await database.getNewClient();
+  const defaulMigrationsOptions = {
+    dbClient,
+    dryRun: true,
+    dir: join("infra", "migrations"),
+    direction: "up",
+    verbose: true,
+    migrationsTable: "pgmigrations",
+  };
+
+  if (request.method === "GET") {
+    const pendingMigrations = await migrateRunner(defaulMigrationsOptions);
+
+    await dbClient.end();
+    return response.status(200).json(pendingMigrations);
+  }
+
+  if (request.method === "POST") {
+    const migratedMigrations = await migrateRunner({
+      ...defaulMigrationsOptions,
+      dryRun: false,
+    });
+
+    await dbClient.end();
+
+    if (migratedMigrations.length > 0) {
+      return response.status(201).json(migratedMigrations);
+    }
+
+    return response.status(200).json(migratedMigrations);
+  }
+
+  return response.status(405).json({ message: "Method not allowed" });
+}
+```
