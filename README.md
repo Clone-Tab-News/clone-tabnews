@@ -1236,3 +1236,26 @@ export default async function migrations(request, response) {
   return response.status(405).json({ message: "Method not allowed" });
 }
 ```
+
+## Aula 26: Criação de ambiente homologação
+
+### Fazendo deploy em Homologação (Staging)
+Primeiro passo foi criar um novo database dentro do Projeto Neon, chamamos ele de `staging`
+![alt text](/class-images/class-26/image.png)
+
+Depois, va Vercel, configuramos essas variáveis de ambiente, porém somente para o Preview (esse é o nome que a Vercel chama o ambiente de homologação).
+![alt text](/class-images/class-26/image-1.png)
+
+Para finalizar, criamos um arquivo chamado `cabelo.tx`e adicionamos ao staged (fizemos commit), depois deletamos esse arquivo e fizmos um novo commit
+![alt text](/class-images/class-26/image-2.png)
+OBS: tivemos que fazer isso, para poder gerar um novo deploy para o ambiente de homologação (Preview) da Vercel.
+
+Então por último criamos uma nova branch e subimos ela (git push), com isso na Vercel foi gerado um novo deploy para o ambiente de homologação (Preview).
+![alt text](/class-images/class-26/image-3.png)
+
+## Melhorando visibilidade dos logs em Produção via curl
+Utilizamos a lib `json.tool` do python3 para visualizar melhor os logs do cli
+
+```bash
+curl -s https://tabnews-clone-filipe.vercel.app/api/v1/status | python3 -m json.tool
+```
