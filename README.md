@@ -1236,3 +1236,114 @@ export default async function migrations(request, response) {
   return response.status(405).json({ message: "Method not allowed" });
 }
 ```
+
+## Aula 26: Criação de ambiente homologação
+
+### Fazendo deploy em Homologação (Staging)
+Primeiro passo foi criar um novo database dentro do Projeto Neon, chamamos ele de `staging`
+![alt text](/class-images/class-26/image.png)
+
+Depois, va Vercel, configuramos essas variáveis de ambiente, porém somente para o Preview (esse é o nome que a Vercel chama o ambiente de homologação).
+![alt text](/class-images/class-26/image-1.png)
+
+Para finalizar, criamos um arquivo chamado `cabelo.tx`e adicionamos ao staged (fizemos commit), depois deletamos esse arquivo e fizmos um novo commit
+![alt text](/class-images/class-26/image-2.png)
+OBS: tivemos que fazer isso, para poder gerar um novo deploy para o ambiente de homologação (Preview) da Vercel.
+
+Então por último criamos uma nova branch e subimos ela (git push), com isso na Vercel foi gerado um novo deploy para o ambiente de homologação (Preview).
+![alt text](/class-images/class-26/image-3.png)
+
+## Melhorando visibilidade dos logs em Produção via curl
+Utilizamos a lib `json.tool` do python3 para visualizar melhor os logs do cli
+
+```bash
+curl -s https://tabnews-clone-filipe.vercel.app/api/v1/status | python3 -m json.tool
+```
+
+# Aula 27
+## Git Reflog
+O comando `git reflog` é uma ferramenta poderosa que permite visualizar o histórico de referências do Git, incluindo commits, branches e outras operações. Ele registra todas as mudanças feitas no repositório, mesmo aquelas que não são visíveis no histórico padrão do Git.
+
+
+# Aula 29
+## Estabilizar "npm run dev"
+Estabilizar Ambientes Locais
+- Alterações no script "dev"
+
+Vamos resolver isso, como usamos um banco ded dados relacional, a migration precisa ser feita no comando "npm run dev" para que o banco de dados esteja com o schema atualizado.
+
+Alteramos o package.json
+
+```json
+"scripts": {
+    "dev": "npm run services:up && npm run migration:up && next dev"
+  }
+```
+
+Porém se rodar o comando "npm run dev" com o container desabilitado aconteceu um erro, pois o docker esta funcionando em modo detach, ou seja, já vai direto para o background e os demais comandos já são executados, porém até o momento ele ainda não "rodou completamente" o que não permite que seja feita a migration
+
+Para resolver o problema foi criado um script para verificar se já esta tudo correto para subir as migrations (wait-for-postgres)
+
+Então foi criado esse arquivo em infra/scripts/wait-for-postgres.js
+
+E colocamos a chamada desse script no package.json
+
+```json
+"scripts": {
+    "wait-for-postgres": "node infra/scripts/wait-for-postgres.js"
+  }
+```
+
+Vamos dar um nome para um container, para poder rodar um comando que verifica a conexão do banco de dados
+- alteração é feita no compose.yaml
+
+```yaml
+services:
+  database:
+    container_name: "postgres-dev"
+```
+
+Para conseguir processar comandos dentro de um script utilizamos o child_process, que permite executar comandos do sistema operacional a partir do Node.js.
+Vamos utilizar o método exec dele para executar o comando psql que verifica a conexão com o banco de dados.
+
+```javascript
+const { exec } = require("node:child_process");
+
+function checkPostgres() {
+  exec("docker exec postgres-dev pg_isready", handleReturn);
+
+  function handleReturn(error, stdout) {
+    if (stdout.search("accepting connections") === -1) {
+      console.log("Não esta aceitando conexões ainda.");
+      return;
+    }
+
+    console.log("✅ Postgres está aceitando conexões!");
+  }
+}
+
+console.log("🔴 Aguardando Postgres aceitar conexões");
+checkPostgres();
+```
+
+Resultado final do arquivo
+```javascript
+const { exec } = require("node:child_process");
+
+function checkPostgres() {
+  exec("docker exec postgres-dev pg_isready --host localhost", handleReturn);
+
+  function handleReturn(error, stdout) {
+    if (stdout.search("accepting connections") === -1) {
+      process.stdout.write(".");
+      checkPostgres();
+      return;
+    }
+
+    process.stdout.write("\n✅ Postgres está aceitando conexões!\n");
+  }
+}
+
+process.stdout.write("\n\n🔴 Aguardando Postgres aceitar conexões\n");
+checkPostgres();
+```
