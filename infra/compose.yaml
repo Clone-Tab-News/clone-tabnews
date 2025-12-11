@@ -1,6 +1,7 @@
 # Qualquer serviço que você deseja executar deve ser definido aqui.
 services:
   database:
+    container_name: "postgres-dev"
     image: "postgres:17.6-alpine3.21"
     env_file:
       - ../.env.development
