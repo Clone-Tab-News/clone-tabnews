@@ -1347,3 +1347,127 @@ function checkPostgres() {
 process.stdout.write("\n\n🔴 Aguardando Postgres aceitar conexões\n");
 checkPostgres();
 ```
+
+## Estabilizar "npm test" (Paralelismo)
+
+A ideia é quando rodar o comando "npm test" ele já suba o container do banco de dados, aguarde ele estar pronto para aceitar conexões, rode as migrations e só depois rode os testes.
+
+Se somente faezr isso:
+```json
+  "test": "npm run services:up && npm run wait-for-postgres && jest --runInBand",
+```
+
+Não vai dar certo porque o comando "npm run services:up" roda em modo detach, ou seja, ele já vai direto para o background e os demais comandos já são executados, porém até o momento ele ainda não "rodou completamente" o que não permite que seja feita a migration e os testes.
+
+Esse erro também ocorre porque o nosso servidor "next dev" ainda não esta de pé. Mas diferente do container, o servidor não possui um modo detach, que roda enquanto o próximo comando é executado.
+
+Vamos resolver esse problema em duas etapas: Primeiro fazer eles rodarem de forma concorrente e depois fazer um orquestrador
+
+Para fazer rodar de forma concorrente, vamos utilizar o pacote `concurrently`, que permite executar múltiplos comandos npm em paralelo.
+https://www.npmjs.com/package/concurrently
+
+```bash
+npm install --save-dev concurrently@8.2.2 
+```
+
+Com esse pacote instalado já posso usar os comando em modo concorrente:
+```json
+    "test": "npm run services:up && npm run wait-for-postgres && concurrently 'next dev' 'jest --runInBand'",
+```
+
+Como podemos ver esse vem com um colchete informando qual o comando que esta sendo executado, neste exemplo, o [0] é o next dev e o [1] é o jest.
+![alt text](class-images/class-29/image.png)
+
+Para melhorar a visualização, vamos utilizar o parâmetro `--names` para definir nomes personalizados para cada comando, vamos usar a maneira abreviada que é "-n".
+
+```json
+    "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest 'next dev' 'jest --runInBand'",
+```
+![alt text](class-images/class-29/image-1.png)
+
+Agora que temos eles nomeados podemos esconder o que não nos interessa, como estamos trabalhando com testes, o que nos interessa é o jest, então podemos esconder o next dev., para isso usamos o parâmetro "--hide"
+```json
+    "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest --hide next 'next dev' 'jest --runInBand'",
+```
+![alt text](class-images/class-29/image-2.png)
+
+Um outro ponto que esta incomodando é fato de sempre precisar pressionar o CRTL+C para finalizar o comando, para resolver isso usamos outro parametro que é o "--kill-others", que finaliza todos os comandos quando um deles finalizar. A versão mais curta dele é "-k"
+```json
+    "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest --hide next --kill-others 'next dev' 'jest --runInBand'",
+```
+![alt text](class-images/class-29/image-3.png)
+
+Um ultimo ponto é que mesmo quando o comando de saída do jest é success (0), o concurrently retorna um comando de falha (1), precisamos definir qual o comando o concurrently deve considerar como sucesso, para isso usamos o parâmetro "--success", que tem a versão curta "-s". Nesse caso queremos que o concurrently considere como sucesso quando o jest finalizar com sucesso, ou seja, com o código 0.
+```json
+    "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest  --hide next --k --success command-jest 'next dev' 'jest --runInBand'",
+```
+![alt text](class-images/class-29/image-4.png)
+
+OBS: O comando "echo $?" no terminal retorna o código de saída do último comando executado. Um código de saída 0 geralmente indica sucesso, enquanto qualquer outro valor indica algum tipo de erro ou falha.
+
+## Estabilizar "npm test" (Orquestrador)
+Vamos verificar nosso /status, confirmando que elçe esta de pé e retornando um json válido, dessa forma confirmamos que o servidor esta funcionando corretamente.
+
+
+Vamos utilizar um módulo chamado "async-retrail", que recebe uma função callback que caso falhe, ele tenta executar novamente até um número máximo de tentativas ou até que a função seja executada com sucesso.
+https://www.npmjs.com/package/async-retry
+
+
+```bash
+npm install  async-retry@1.3.3 
+```
+
+Criamos um arquivo orchestrator.js em "tests/orchestrator.js" para utilizar retry e garantir que vai estar tudo funcionando corretamente.
+```javascript
+import retry from "async-retry";
+
+async function waitForAllServices() {
+  await waitForWebServer();
+
+  async function waitForWebServer() {
+    return retry(fechStatusPage);
+
+    async function fechStatusPage() {
+      // Precisamos colocar alguma coisa que possa estourar um erro, para que o async retry fique tentando novamente
+      // Caso não ocorra erro ele vai entender que teve sucesso e continuar o script
+      const response = await fetch("http://localhost:3000/api/v1/status");
+      const responseBody = await response.json();
+    }
+  }
+}
+
+export default {
+  waitForAllServices,
+};
+```
+
+Agora somente importamos nosso orchestrator nos testes utilizando o hook beforeAll
+
+```javascript
+import orchestrator from "tests/orchestrator.js";
+
+beforeAll(async () => {
+  await orchestrator.waitForAllServices();
+});
+```
+
+Mas ainda pode ocorrer de a máquina onde esses testes forem rodar ser muito lenta e acabar quebrando os testes, pois o jest por padrão espera somente 5 segundos para executar seus comandos, agora se o nosso servidor por algum motivo demorar mais que 5 segundo pra subir, o nosso hook beforeAll vai quebrar e o teste vai teste vai retornar um erro de timeout.
+
+Podemos resolver esse problema adicionando mais tempo para o jest agurdar, fazemos isso no jest.config.js
+
+```javascript
+const jestConfig = createJestConfig({
+  moduleDirectories: ["node_modules", "<rootDir>"],
+  testEnvironment: "node",
+  testTimeout: 60000,
+});
+```
+
+# Aula 30
+## rafaelcorrea-dev: "maxTimeout"
+
+O jest por padrão utiliza um fator 2 para os retry (tentativas) do async-retry, ou seja, se a primeira tentativa falhar, ele espera 100ms para tentar novamente, se a segunda tentativa falhar, ele espera 200ms para tentar novamente, se a terceira tentativa falhar, ele espera 400ms para tentar novamente, e assim por diante.
+
+Como isso pode atrasar e muito em determinados casos, podemos definir um tempo máximo de espera entre as tentativas, para isso utilizamos o parâmetro "maxTimeout" do async-retry.
+
+```javascript
