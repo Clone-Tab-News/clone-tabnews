@@ -1,0 +1,24 @@
+# Definir o nome do fluxo
+name: Automated Tests
+
+# Definir qual evento ele deve ficar observando
+on: pull_request
+
+# Quando o Pull Request acontecer, precisar rodar os jobs
+jobs:
+  jest:
+    name: Jest Ubuntu
+    # Vamos definir aqui também com o SO que vai rodar as coisas no runs-on
+    runs-on: ubuntu-latest
+    # Agora vamos definir os passos que o job vai executar
+    steps:
+      # Aqui usamos extensões (Actions) prontas do GitHub
+      - uses: actions/checkout@v4 # Puxa o código para dentro do ambiente
+
+      - uses: actions/setup-node@v4 # Configura o Node.js
+        with:
+          node-version: 'lts/hydrogen' # Versão do Node.js
+
+      # Aqui vamos executar comandos dentro do ambiente de forma manual
+      - run: npm ci
+      - run: npm test

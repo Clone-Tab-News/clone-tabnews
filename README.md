@@ -1470,4 +1470,69 @@ O jest por padrão utiliza um fator 2 para os retry (tentativas) do async-retry,
 
 Como isso pode atrasar e muito em determinados casos, podemos definir um tempo máximo de espera entre as tentativas, para isso utilizamos o parâmetro "maxTimeout" do async-retry.
 
-```javascript
+
+## Configurar "Continuous Integration" (com GitHub Actions)
+
+O que vamos fazer aqui é o comando "npm test" rodar em uma máqui remota, sempre zerada.
+
+Pra isso vamos utilizar o GutHubActions:
+https://github.com/features/actions?locale=pt-BR
+
+O Fluxo é o seguinte:
+- Tudo começa com um Workflow (fluxo de trabalho)
+- Dentro desse fluxo de trabalho definimos qual será o evento que esse workflow vai ficar esperando acontecer (observando)
+- Quando ocorrer esse evento será executado um Job (tarefa) que precisa ser executado
+- Precisamos definir qual vai ser o SO que irá rodar (RUNNER) as coisas
+- Agora definido qual o SO podemos colocar qual será os comandos que irão rodar dentro dele (step-by-step)
+![alt text](class-images/class-30/image.png)
+
+Pra iniciar criamos o arquivo que vai ser nosso workflow de testes:
+`.github/workflows/tests.yml`
+
+podemos achar extensões para as Actions que ficam em:
+https://github.com/marketplace
+
+Aqui podemos achar por exemplo a extensão que estamos usando de `checkout`
+
+Vamos utilizar o comando `npm ci` que é mais indicado para ambientes de CI/CD, pois ele instala as dependências exatamente como estão definidas no package-lock.json, garantindo que o ambiente de desenvolvimento e o ambiente de CI/CD sejam idênticos.
+Enquanto o `npm install` pode atualizar o package-lock.json se houver diferenças, o `npm ci` sempre vai ser a mesma coisa
+OBS: esta ai a importancia de sempre commitar o package-lock.json no repositório.
+![alt text](class-images/class-30/image-1.png)
+
+O arquivo `tests.yml` ficou assim:
+```yaml
+# Definir o nome do fluxo
+name: Automated Tests
+
+# Definir qual evento ele deve ficar observando
+on: pull_request
+
+# Quando o Pull Request acontecer, precisar rodar os jobs
+jobs:
+  jest:
+    name: Jest Ubuntu
+    # Vamos definir aqui também com o SO que vai rodar as coisas no runs-on
+    runs-on: ubuntu-latest
+    # Agora vamos definir os passos que o job vai executar
+    steps:
+      # Aqui usamos extensões (Actions) prontas do GitHub
+      - uses: actions/checkout@v4 # Puxa o código para dentro do ambiente
+
+      - uses: actions/setup-node@v4 # Configura o Node.js
+        with:
+          node-version: 'lts/hydrogen' # Versão do Node.js
+
+      # Aqui vamos executar comandos dentro do ambiente de forma manual
+      - run: npm ci
+      - run: npm test
+```
+
+Dessa forma já vai funcionar sempre fizer um Pull Request lá no github, porém ainda temos um problema, porque mesmo que um teste falhe, ainda sim é possivel fazer o merge com a main.
+
+Para impedir isso é preciso fazer algumas configurações no github.
+
+- Vamos em Settings e Branchs
+![alt text](image.png)
+
+Ai é so adicionar as regras.
+![alt text](image-1.png)
