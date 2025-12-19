@@ -1532,7 +1532,19 @@ Dessa forma já vai funcionar sempre fizer um Pull Request lá no github, porém
 Para impedir isso é preciso fazer algumas configurações no github.
 
 - Vamos em Settings e Branchs
-![alt text](image.png)
+![alt text](class-images/class-30/image-2.png)
 
 Ai é so adicionar as regras.
-![alt text](image-1.png)
+![alt text](class-images/class-30/image-3.png)
+
+# Aula 31
+## Lint Code: Style
+
+Existem os Pré Formatadores e os Pós Formatadores.
+
+Os `Pré Formatadores` são aqueles que formatam o código enquanto estamos escrevendo, como por exemplo o `Prettier`, que é um formatador de código que formata o código automaticamente de acordo com as regras definidas.
+
+Os `Pós Formatadores` são aqueles que formatam o código depois que salva o arquivo, como por exemplo o `ESLint`, que é um linter que verifica o código em busca de problemas de estilo e boas práticas, e pode ser configurado para corrigir automaticamente alguns desses problemas.
+
+Os `Pós Formatadores` podedm ser divididos em duas categorias de especialização: Especializazdos em `Estilização`do código e especializado em `Qualidade`do código.
+![alt text](image.png)
