@@ -1548,3 +1548,27 @@ Os `Pós Formatadores` são aqueles que formatam o código depois que salva o ar
 
 Os `Pós Formatadores` podedm ser divididos em duas categorias de especialização: Especializazdos em `Estilização`do código e especializado em `Qualidade`do código.
 ![alt text](image.png)
+
+Vamos criar um novo arquivo para o workflow de lint code:
+`.github/workflows/linting.yml`
+
+```yaml
+name: Linting
+
+on: pull_request
+
+jobs:
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Puxa o código para dentro do ambiente
+
+      - uses: actions/setup-node@v4 # Configura o Node.js
+        with:
+          node-version: 'lts/hydrogen' # Versão do Node.js
+
+      - run: npm ci
+      - run: npm run lint:prettier:check
+```
+
