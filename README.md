@@ -936,6 +936,7 @@ export default async function migrations(request, response) {
 ```
 
 ### Migrations pelo endpoint “/migrations” (Live Run)
+
 Para executar as migrações em modo Live Run, ou seja, aplicando as mudanças ao banco de dados, criamos um teste para rodar com o metodo POST:
 
 ```javascript
@@ -1076,6 +1077,7 @@ Isso garante um ambiente limpo e previsível para cada execução de testes.
 Com todas essas configurações, os testes de integração ficaram organizados da seguinte forma:
 
 **GET /api/v1/migrations** (`tests/integration/api/v1/migrations/get.test.js`):
+
 ```javascript
 import database from "infra/database.js";
 import fetch from "node-fetch";
@@ -1099,6 +1101,7 @@ test("Get to /api/v1/migrations should return 200", async () => {
 ```
 
 **POST /api/v1/migrations** (`tests/integration/api/v1/migrations/post.test.js`):
+
 ```javascript
 import database from "infra/database.js";
 import fetch from "node-fetch";
@@ -1136,6 +1139,7 @@ Com essa estrutura, os testes de integração são confiáveis, isolados e podem
 ## Aula 25: Deploys e Migração em Produção
 
 ### Instalando o dotenv-expand
+
 O pacote `dotenv-expand` é uma extensão do `dotenv` que permite expandir variáveis de ambiente que referenciam outras variáveis. Isso é útil quando você deseja criar variáveis compostas ou reutilizar valores já definidos.
 
 no termianal, instalei o pacote:
@@ -1145,6 +1149,7 @@ npm install dotenv-expand@11.0.6
 ```
 
 ai meu .env.development ficou assim:
+
 ```
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
@@ -1156,6 +1161,7 @@ NODE_ENV=development
 ```
 
 ### Criando uma conexão com o banco
+
 No arquivo infra/database.js, criei o método assincrono getNewClient. Ele retorna uma instância conectada do banco de dados PostgreSQL usando as variáveis de ambiente para configuração.
 
 ```javascript
@@ -1240,6 +1246,7 @@ export default async function migrations(request, response) {
 ## Aula 26: Criação de ambiente homologação
 
 ### Fazendo deploy em Homologação (Staging)
+
 Primeiro passo foi criar um novo database dentro do Projeto Neon, chamamos ele de `staging`
 ![alt text](/class-images/class-26/image.png)
 
@@ -1254,6 +1261,7 @@ Então por último criamos uma nova branch e subimos ela (git push), com isso na
 ![alt text](/class-images/class-26/image-3.png)
 
 ## Melhorando visibilidade dos logs em Produção via curl
+
 Utilizamos a lib `json.tool` do python3 para visualizar melhor os logs do cli
 
 ```bash
@@ -1261,13 +1269,17 @@ curl -s https://tabnews-clone-filipe.vercel.app/api/v1/status | python3 -m json.
 ```
 
 # Aula 27
+
 ## Git Reflog
+
 O comando `git reflog` é uma ferramenta poderosa que permite visualizar o histórico de referências do Git, incluindo commits, branches e outras operações. Ele registra todas as mudanças feitas no repositório, mesmo aquelas que não são visíveis no histórico padrão do Git.
 
-
 # Aula 29
+
 ## Estabilizar "npm run dev"
+
 Estabilizar Ambientes Locais
+
 - Alterações no script "dev"
 
 Vamos resolver isso, como usamos um banco ded dados relacional, a migration precisa ser feita no comando "npm run dev" para que o banco de dados esteja com o schema atualizado.
@@ -1295,6 +1307,7 @@ E colocamos a chamada desse script no package.json
 ```
 
 Vamos dar um nome para um container, para poder rodar um comando que verifica a conexão do banco de dados
+
 - alteração é feita no compose.yaml
 
 ```yaml
@@ -1327,6 +1340,7 @@ checkPostgres();
 ```
 
 Resultado final do arquivo
+
 ```javascript
 const { exec } = require("node:child_process");
 
@@ -1353,6 +1367,7 @@ checkPostgres();
 A ideia é quando rodar o comando "npm test" ele já suba o container do banco de dados, aguarde ele estar pronto para aceitar conexões, rode as migrations e só depois rode os testes.
 
 Se somente faezr isso:
+
 ```json
   "test": "npm run services:up && npm run wait-for-postgres && jest --runInBand",
 ```
@@ -1367,10 +1382,11 @@ Para fazer rodar de forma concorrente, vamos utilizar o pacote `concurrently`, q
 https://www.npmjs.com/package/concurrently
 
 ```bash
-npm install --save-dev concurrently@8.2.2 
+npm install --save-dev concurrently@8.2.2
 ```
 
 Com esse pacote instalado já posso usar os comando em modo concorrente:
+
 ```json
     "test": "npm run services:up && npm run wait-for-postgres && concurrently 'next dev' 'jest --runInBand'",
 ```
@@ -1383,41 +1399,48 @@ Para melhorar a visualização, vamos utilizar o parâmetro `--names` para defin
 ```json
     "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest 'next dev' 'jest --runInBand'",
 ```
+
 ![alt text](class-images/class-29/image-1.png)
 
 Agora que temos eles nomeados podemos esconder o que não nos interessa, como estamos trabalhando com testes, o que nos interessa é o jest, então podemos esconder o next dev., para isso usamos o parâmetro "--hide"
+
 ```json
     "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest --hide next 'next dev' 'jest --runInBand'",
 ```
+
 ![alt text](class-images/class-29/image-2.png)
 
 Um outro ponto que esta incomodando é fato de sempre precisar pressionar o CRTL+C para finalizar o comando, para resolver isso usamos outro parametro que é o "--kill-others", que finaliza todos os comandos quando um deles finalizar. A versão mais curta dele é "-k"
+
 ```json
     "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest --hide next --kill-others 'next dev' 'jest --runInBand'",
 ```
+
 ![alt text](class-images/class-29/image-3.png)
 
 Um ultimo ponto é que mesmo quando o comando de saída do jest é success (0), o concurrently retorna um comando de falha (1), precisamos definir qual o comando o concurrently deve considerar como sucesso, para isso usamos o parâmetro "--success", que tem a versão curta "-s". Nesse caso queremos que o concurrently considere como sucesso quando o jest finalizar com sucesso, ou seja, com o código 0.
+
 ```json
     "test": "npm run services:up && npm run wait-for-postgres && concurrently --n next,jest  --hide next --k --success command-jest 'next dev' 'jest --runInBand'",
 ```
+
 ![alt text](class-images/class-29/image-4.png)
 
 OBS: O comando "echo $?" no terminal retorna o código de saída do último comando executado. Um código de saída 0 geralmente indica sucesso, enquanto qualquer outro valor indica algum tipo de erro ou falha.
 
 ## Estabilizar "npm test" (Orquestrador)
-Vamos verificar nosso /status, confirmando que elçe esta de pé e retornando um json válido, dessa forma confirmamos que o servidor esta funcionando corretamente.
 
+Vamos verificar nosso /status, confirmando que elçe esta de pé e retornando um json válido, dessa forma confirmamos que o servidor esta funcionando corretamente.
 
 Vamos utilizar um módulo chamado "async-retrail", que recebe uma função callback que caso falhe, ele tenta executar novamente até um número máximo de tentativas ou até que a função seja executada com sucesso.
 https://www.npmjs.com/package/async-retry
 
-
 ```bash
-npm install  async-retry@1.3.3 
+npm install  async-retry@1.3.3
 ```
 
 Criamos um arquivo orchestrator.js em "tests/orchestrator.js" para utilizar retry e garantir que vai estar tudo funcionando corretamente.
+
 ```javascript
 import retry from "async-retry";
 
@@ -1464,12 +1487,12 @@ const jestConfig = createJestConfig({
 ```
 
 # Aula 30
+
 ## rafaelcorrea-dev: "maxTimeout"
 
 O jest por padrão utiliza um fator 2 para os retry (tentativas) do async-retry, ou seja, se a primeira tentativa falhar, ele espera 100ms para tentar novamente, se a segunda tentativa falhar, ele espera 200ms para tentar novamente, se a terceira tentativa falhar, ele espera 400ms para tentar novamente, e assim por diante.
 
 Como isso pode atrasar e muito em determinados casos, podemos definir um tempo máximo de espera entre as tentativas, para isso utilizamos o parâmetro "maxTimeout" do async-retry.
-
 
 ## Configurar "Continuous Integration" (com GitHub Actions)
 
@@ -1479,12 +1502,13 @@ Pra isso vamos utilizar o GutHubActions:
 https://github.com/features/actions?locale=pt-BR
 
 O Fluxo é o seguinte:
+
 - Tudo começa com um Workflow (fluxo de trabalho)
 - Dentro desse fluxo de trabalho definimos qual será o evento que esse workflow vai ficar esperando acontecer (observando)
 - Quando ocorrer esse evento será executado um Job (tarefa) que precisa ser executado
 - Precisamos definir qual vai ser o SO que irá rodar (RUNNER) as coisas
 - Agora definido qual o SO podemos colocar qual será os comandos que irão rodar dentro dele (step-by-step)
-![alt text](class-images/class-30/image.png)
+  ![alt text](class-images/class-30/image.png)
 
 Pra iniciar criamos o arquivo que vai ser nosso workflow de testes:
 `.github/workflows/tests.yml`
@@ -1500,6 +1524,7 @@ OBS: esta ai a importancia de sempre commitar o package-lock.json no repositóri
 ![alt text](class-images/class-30/image-1.png)
 
 O arquivo `tests.yml` ficou assim:
+
 ```yaml
 # Definir o nome do fluxo
 name: Automated Tests
@@ -1520,7 +1545,7 @@ jobs:
 
       - uses: actions/setup-node@v4 # Configura o Node.js
         with:
-          node-version: 'lts/hydrogen' # Versão do Node.js
+          node-version: "lts/hydrogen" # Versão do Node.js
 
       # Aqui vamos executar comandos dentro do ambiente de forma manual
       - run: npm ci
@@ -1532,12 +1557,13 @@ Dessa forma já vai funcionar sempre fizer um Pull Request lá no github, porém
 Para impedir isso é preciso fazer algumas configurações no github.
 
 - Vamos em Settings e Branchs
-![alt text](class-images/class-30/image-2.png)
+  ![alt text](class-images/class-30/image-2.png)
 
 Ai é so adicionar as regras.
 ![alt text](class-images/class-30/image-3.png)
 
 # Aula 31
+
 ## Lint Code: Style
 
 Existem os Pré Formatadores e os Pós Formatadores.
@@ -1547,4 +1573,30 @@ Os `Pré Formatadores` são aqueles que formatam o código enquanto estamos escr
 Os `Pós Formatadores` são aqueles que formatam o código depois que salva o arquivo, como por exemplo o `ESLint`, que é um linter que verifica o código em busca de problemas de estilo e boas práticas, e pode ser configurado para corrigir automaticamente alguns desses problemas.
 
 Os `Pós Formatadores` podedm ser divididos em duas categorias de especialização: Especializazdos em `Estilização`do código e especializado em `Qualidade`do código.
-![alt text](image.png)
+![alt text](class-images/class-31/image.png)
+
+Vamos criar um novo arquivo para o workflow de lint code:
+`.github/workflows/linting.yml`
+
+```yaml
+name: Linting
+
+on: pull_request
+
+jobs:
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Puxa o código para dentro do ambiente
+
+      - uses: actions/setup-node@v4 # Configura o Node.js
+        with:
+          node-version: "lts/hydrogen" # Versão do Node.js
+
+      - run: npm ci
+      - run: npm run lint:prettier:check
+```
+
+Lá no github, precisamos adicioanr a regra de não permitir fazer o merge enquanto a verificação do prettier não estiver passando.
+![alt text](class-images/class-31/image-1.png)
