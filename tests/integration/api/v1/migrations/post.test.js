@@ -1,8 +1,5 @@
 import database from "infra/database.js";
 import orchestrator from "tests/orchestrator.js";
-// import fetch from "node-fetch";
-
-// globalThis.fetch = fetch;
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
