@@ -1600,3 +1600,108 @@ jobs:
 
 Lá no github, precisamos adicioanr a regra de não permitir fazer o merge enquanto a verificação do prettier não estiver passando.
 ![alt text](class-images/class-31/image-1.png)
+
+## Lint Code: Quality
+
+Agora vamos trazer o ESLint para o projeto, para ele ajudar a manter algumas regras básicas de qualidade de código. Depois colocar isso no CI.
+https://eslint.org/
+
+
+Documentação para instalar o ESLint direto pelo NextJs, já com todas as recomendações prontas:
+https://nextjs.org/docs/app/api-reference/config/eslint
+
+A primeira coisa que fizemos foi criar um novo script no package.json para rodar o eslint:
+
+```json
+"scripts": {
+  "lint:eslint:check": "next lint",
+}
+```
+
+Quando rodei esse comando no terminal já me deu a opção de instalação.
+![alt text](class-images/class-31/image-2.png)
+
+Para que o ESLint consiga verificar todos os arquivos do projeto, podemos utilizar o proprio comando "eslint" ao invés da abstração do next "next lint"
+
+```json
+"scripts": {
+  "lint:eslint:check": "eslint .",
+}
+```
+![alt text](class-images/class-31/image-3.png)
+
+Agora precisamos fazer o ESLint entender como o Jest funciona, para que ele pare de reclarmar dos erross relacionados ao Jest, para isso instalamos o plugin do Jest para o ESLint:
+https://www.npmjs.com/package/eslint-plugin-jest
+
+```bash
+npm i -D eslint-plugin-jest@28.6.0
+```
+
+Agora no .eslintrc.json adicionamos o plugin do jest e a configuração recomendada dele:
+{
+  "extends": [
+    "plugin:jest/recommended", -> essa é a recomendação do plugin do jest para o eslint
+    "eslint:recommended",
+    "next/core-web-vitals"
+  ]
+}
+
+Precisamos agora de um outro plugin para que as regras do prettier não conflitem com as regras do eslint, para isso instalamos o eslint-config-prettier:
+https://www.npmjs.com/package/eslint-config-prettier
+
+Depois fazemos a instalação:
+
+```bash
+npm i -D eslint-config-prettier@9.1.0
+```
+
+Por fim basta colocar o "prettier" no final do array de extends do .eslintrc.json, para que as regras do prettier sobrescrevam as regras do eslint.
+
+```json
+{
+  "extends": [
+    "plugin:jest/recommended",
+    "eslint:recommended",
+    "next/core-web-vitals",
+    "prettier"
+  ]
+}
+```
+
+Para funcionar no CI, adicionamos essa nova informação no arquivo `.github/workflows/linting.yml`
+
+```yaml
+name: Linting
+
+on: pull_request
+
+jobs:
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Puxa o código para dentro do ambiente
+
+      - uses: actions/setup-node@v4 # Configura o Node.js
+        with:
+          node-version: "lts/hydrogen" # Versão do Node.js
+
+      - run: npm ci
+      - run: npm run lint:prettier:check
+  eslint:
+    name: Eslint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Puxa o código para dentro do ambiente
+
+      - uses: actions/setup-node@v4 # Configura o Node.js
+        with:
+          node-version: "lts/hydrogen" # Versão do Node.js
+
+      - run: npm ci
+      - run: npm run lint:eslint:check
+
+```
+
+Nas `rulesets` do GitHub adicionamos essa nova regra do EsLint
+![alt text](class-images/class-31/image-4.png)
